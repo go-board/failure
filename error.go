@@ -9,9 +9,17 @@ type Errno int32
 type Error struct {
 	inner error
 	frame *Frame
+	Msg   string
+	Code  Errno
+}
 
-	Msg  string
-	Code Errno
+func New(code Errno, msg string) *Error {
+	frames := traceback(0, 2)
+	var frame *Frame
+	if len(frames) > 1 {
+		frame = frames[1]
+	}
+	return &Error{Code: code, Msg: msg, frame: frame}
 }
 
 func (e *Error) Error() string {
@@ -30,27 +38,17 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.inner }
 
-func New(code Errno, msg string) *Error {
-	frames := traceback(0, 1)
-	var frame *Frame
-	if len(frames) > 0 {
-		frame = frames[0]
-	}
-	return &Error{Code: code, Msg: msg, frame: frame}
-}
-
 func (e *Error) WithError(err error) *Error {
-	e.inner = err
-	return e
+	return &Error{inner: err, frame: e.frame, Msg: e.Msg, Code: e.Code}
 }
 
 func (e *Error) WithFrame(f *Frame) *Error {
-	e.frame = f
-	return e
+	return &Error{inner: e.inner, frame: f, Msg: e.Msg, Code: e.Code}
 }
 
 func (e *Error) Frame() *Frame {
-	var f *Frame
-	*f = *e.frame
-	return f
+	if e.frame == nil {
+		return nil
+	}
+	return &Frame{Location: e.frame.Location, FuncName: e.frame.FuncName}
 }
