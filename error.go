@@ -39,7 +39,7 @@ func (e *Error) Error() string {
 func (e *Error) Unwrap() error { return e.inner }
 
 func (e *Error) WithError(err error) *Error {
-	return &Error{inner: err, frame: e.frame, Msg: e.Msg, Code: e.Code}
+	return &Error{inner: err, frame: e.Frame(), Msg: e.Msg, Code: e.Code}
 }
 
 func (e *Error) WithFrame(f *Frame) *Error {
